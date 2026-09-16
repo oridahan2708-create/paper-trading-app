@@ -13,11 +13,13 @@ interface Props {
   onClose: () => void;
   asset: Asset;
   initialSide?: 'buy' | 'sell';
+  source?: 'manual' | 'copy';
+  copiedFrom?: { id: string; name: string };
 }
 
 const QUICK_PERCENTAGES = [25, 50, 75, 100];
 
-export function BuySellModal({ visible, onClose, asset, initialSide = 'buy' }: Props) {
+export function BuySellModal({ visible, onClose, asset, initialSide = 'buy', source = 'manual', copiedFrom }: Props) {
   const [side, setSide] = useState<'buy' | 'sell'>(initialSide);
   const [amountText, setAmountText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,9 @@ export function BuySellModal({ visible, onClose, asset, initialSide = 'buy' }: P
     }
     const assetRef = { id: asset.id, symbol: asset.symbol, name: asset.name, assetClass: asset.assetClass, image: asset.image };
     const result =
-      side === 'buy' ? buy(assetRef, quantity, asset.price) : sell(asset.id, quantity, asset.price);
+      side === 'buy'
+        ? buy(assetRef, quantity, asset.price, source, copiedFrom)
+        : sell(asset.id, quantity, asset.price, source, copiedFrom);
     if (!result.ok) {
       setError(result.error ?? 'Trade failed');
       return;
@@ -83,6 +87,7 @@ export function BuySellModal({ visible, onClose, asset, initialSide = 'buy' }: P
             </Pressable>
           </View>
 
+          {copiedFrom && <Text style={styles.copyBanner}>Copying trade from {copiedFrom.name}</Text>}
           <Text style={styles.priceLabel}>Market price: {formatPrice(asset.price)} (demo, live)</Text>
 
           <View style={styles.amountRow}>
@@ -146,6 +151,7 @@ const styles = StyleSheet.create({
   sideButtonText: { ...typography.bodyStrong, color: colors.textTertiary },
   sideButtonTextActive: { color: colors.textPrimary },
   priceLabel: { ...typography.caption, color: colors.textTertiary },
+  copyBanner: { ...typography.captionStrong, color: colors.accentSecondary },
   amountRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm },
   dollarSign: { ...typography.displayMedium, color: colors.textSecondary },
   amountInput: { ...typography.displayLarge, color: colors.textPrimary, flex: 1, padding: 0 },

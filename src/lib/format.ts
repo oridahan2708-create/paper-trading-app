@@ -22,6 +22,20 @@ export function formatCompactNumber(value: number | null | undefined): string {
   return `$${value.toFixed(2)}`;
 }
 
+export function formatRelativeMinutes(minutesAgo: number): string {
+  if (minutesAgo < 1) return 'just now';
+  if (minutesAgo < 60) return `${Math.round(minutesAgo)}m ago`;
+  const hours = minutesAgo / 60;
+  if (hours < 24) return `${Math.round(hours)}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+
+export function formatCompactCount(value: number): string {
+  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+  return String(value);
+}
+
 export function formatQuantity(value: number): string {
   if (value === 0) return '0';
   const abs = Math.abs(value);
