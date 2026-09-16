@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { AssetRow } from '@/components/AssetRow';
@@ -22,11 +22,6 @@ export default function DashboardScreen() {
   const stocks = useStockSymbols();
   const cryptoSearch = useCryptoSearch(query);
   const stockSearch = useStockSearch(query);
-
-  const filteredStocks = useMemo(() => {
-    if (!stocks.data) return [];
-    return stocks.data;
-  }, [stocks.data]);
 
   return (
     <View style={styles.container}>
@@ -88,13 +83,13 @@ export default function DashboardScreen() {
         />
       ) : (
         <FlatList
-          data={filteredStocks}
+          data={stocks.data ?? []}
           keyExtractor={(item) => item.symbol}
           renderItem={({ item }) => <StockListRow stock={item} />}
           ListHeaderComponent={
-            stocks.isLoading ? null : (
+            stocks.isLoading || !stocks.data ? null : (
               <Text style={styles.helperText}>
-                {filteredStocks.length.toLocaleString()} US-listed stocks &amp; ETFs — prices update live as you scroll
+                {stocks.data.length.toLocaleString()} US-listed stocks &amp; ETFs — prices update live as you scroll
               </Text>
             )
           }
