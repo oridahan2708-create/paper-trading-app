@@ -1,13 +1,19 @@
+import { Platform } from 'react-native';
+
 import type { Asset, CandlePoint, ChartRange, LinePoint } from './types';
 
-const BASE_URL = 'https://api.coingecko.com/api/v3';
+// On web the browser can't be trusted with the API key and some endpoints
+// don't send CORS headers, so requests go through the same-origin proxy at
+// app/api/coingecko/[...path]+api.ts instead of hitting CoinGecko directly.
+const BASE_URL = Platform.OS === 'web' ? '/api/coingecko' : 'https://api.coingecko.com/api/v3';
 
-// Optional free CoinGecko "Demo" API key. Unauthenticated requests work too,
-// just with a lower rate limit. See README for how to get one.
+// Optional free CoinGecko "Demo" API key, used for native builds only (the
+// web proxy injects its own server-side COINGECKO_API_KEY). Unauthenticated
+// requests work too, just with a lower rate limit. See README.
 const API_KEY = process.env.EXPO_PUBLIC_COINGECKO_API_KEY;
 
 function withKey(url: string): string {
-  if (!API_KEY) return url;
+  if (Platform.OS === 'web' || !API_KEY) return url;
   const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}x_cg_demo_api_key=${API_KEY}`;
 }

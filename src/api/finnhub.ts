@@ -1,6 +1,11 @@
+import { Platform } from 'react-native';
+
 import type { Asset, ChartRange } from './types';
 
-const BASE_URL = 'https://finnhub.io/api/v1';
+// Web goes through the same-origin proxy (app/api/finnhub/[...path]+api.ts) so
+// the key never ships in the public JS bundle and browser CORS never applies.
+// Native keeps calling Finnhub directly with the embedded EXPO_PUBLIC_ key.
+const BASE_URL = Platform.OS === 'web' ? '/api/finnhub' : 'https://finnhub.io/api/v1';
 const API_KEY = process.env.EXPO_PUBLIC_FINNHUB_API_KEY;
 
 export class MissingApiKeyError extends Error {
@@ -16,9 +21,9 @@ function requireKey(): string {
 }
 
 async function finnhubFetch<T>(path: string): Promise<T> {
-  const key = requireKey();
   const sep = path.includes('?') ? '&' : '?';
-  const res = await fetch(`${BASE_URL}${path}${sep}token=${key}`);
+  const url = Platform.OS === 'web' ? `${BASE_URL}${path}` : `${BASE_URL}${path}${sep}token=${requireKey()}`;
+  const res = await fetch(url);
   if (!res.ok) {
     if (res.status === 429) throw new Error('Finnhub rate limit hit — please wait a moment and try again.');
     throw new Error(`Finnhub request failed (${res.status})`);
