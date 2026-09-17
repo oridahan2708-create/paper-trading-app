@@ -1,3 +1,4 @@
+import '@/lib/nodePolyfills';
 import 'react-native-gesture-handler';
 import { ActivityIndicator, View } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';

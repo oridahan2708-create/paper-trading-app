@@ -1,17 +1,16 @@
+import { Platform } from 'react-native';
+
+import { YAHOO_RANGE_TO_PARAMS as RANGE_TO_PARAMS } from './chartRanges';
 import type { CandlePoint, ChartRange, LinePoint } from './types';
 
 // Yahoo Finance's public chart endpoint. No API key required. Used as the
 // historical price source for stocks (candles, line chart, and to derive
 // 7d/30d % change), since Finnhub's free tier restricts historical candles.
+//
+// This endpoint sends no CORS headers, so a browser blocks it outright —
+// unlike React Native's native fetch, which isn't subject to CORS. On web,
+// requests go through the same-origin proxy at app/api/yahoo-chart+api.ts.
 const BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
-
-const RANGE_TO_PARAMS: Record<ChartRange, { range: string; interval: string }> = {
-  '1D': { range: '1d', interval: '5m' },
-  '1W': { range: '5d', interval: '30m' },
-  '1M': { range: '1mo', interval: '1d' },
-  '3M': { range: '3mo', interval: '1d' },
-  '1Y': { range: '1y', interval: '1wk' },
-};
 
 interface YahooChartResponse {
   chart: {
@@ -36,9 +35,16 @@ export interface YahooChartResult {
 }
 
 export async function fetchYahooChart(symbol: string, range: ChartRange): Promise<YahooChartResult> {
-  const { range: r, interval } = RANGE_TO_PARAMS[range];
-  const params = new URLSearchParams({ range: r, interval, includePrePost: 'false' });
-  const res = await fetch(`${BASE_URL}/${encodeURIComponent(symbol)}?${params.toString()}`);
+  let url: string;
+  if (Platform.OS === 'web') {
+    const params = new URLSearchParams({ symbol, range });
+    url = `/api/yahoo-chart?${params.toString()}`;
+  } else {
+    const { range: r, interval } = RANGE_TO_PARAMS[range];
+    const params = new URLSearchParams({ range: r, interval, includePrePost: 'false' });
+    url = `${BASE_URL}/${encodeURIComponent(symbol)}?${params.toString()}`;
+  }
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Yahoo Finance chart request failed (${res.status})`);
   const data = (await res.json()) as YahooChartResponse;
   const result = data.chart.result?.[0];
